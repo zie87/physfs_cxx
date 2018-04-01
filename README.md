@@ -3,7 +3,7 @@ Header only modern C++ wrapper for [physfs](https://icculus.org/physfs/)
 
 | Build status          | Systems / Compilers         |
 | ------------- | ------------------------------------------ |
-| [![CLang / GCC / XCode Builds](https://travis-ci.org/zie87/physfs_cxx.svg?branch=master)](https://travis-ci.org/zie87/physfs_cxx) | Linux (clang5  / gcc7) OSX (XCode 8.3 clang) |
+| [![CLang / GCC / XCode Builds](https://travis-ci.org/zie87/physfs_cxx.svg?branch=master)](https://travis-ci.org/zie87/physfs_cxx) | Linux (clang6 / gcc7) OSX (XCode 8.3 clang) |
 
 ## libraries used
 - [PhysicsFS](https://icculus.org/physfs/) as base for this project.

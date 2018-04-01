@@ -22,16 +22,16 @@ matrix:
     # Linux C++14 Clang builds
     - os: linux
       compiler: clang
-      addons: &clang5
+      addons: &clang6
         apt:
-          sources: ['llvm-toolchain-trusty-5.0', 'ubuntu-toolchain-r-test']
-          packages: ['clang-5.0']
-      env: MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0" BUILD_TYPE='Release' SUPPORT=libstdc++-4.9-dev
+          sources: ['llvm-toolchain-trusty-6.0', 'ubuntu-toolchain-r-test']
+          packages: ['clang-6.0', 'libstdc++-6-dev']
+      env: MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0" BUILD_TYPE='Release'
 
     - os: linux
       compiler: clang
-      addons: *clang5
-      env: MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0" BUILD_TYPE='Debug' SUPPORT=libstdc++-4.9-dev
+      addons: *clang6
+      env: MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0" BUILD_TYPE='Debug'
 
     # OSX C++14 Clang Builds
 
