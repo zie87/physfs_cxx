@@ -26,7 +26,9 @@ include_directories(${PHYSFS_INCLUDE_DIR})
 
 add_subdirectory (3rd EXCLUDE_FROM_ALL)
 
-include_directories(include)
+include_directories(inc)
+
+enable_testing()
 add_subdirectory(src)
 
 find_package(Doxygen)

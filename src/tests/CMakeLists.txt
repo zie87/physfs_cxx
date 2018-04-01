@@ -17,7 +17,6 @@ add_executable(${PROJECT_TEST_NAME} "${CATCH_MAIN_FILE}"
                                     "${CMAKE_CURRENT_SOURCE_DIR}/physfs_cxx/stream_tests.cxx"
 )
 target_link_libraries(${PROJECT_TEST_NAME} ${PROJECT_TEST_LIBS})
-enable_testing()
 
 #parse catch tests
 ParseAndAddCatchTests (${PROJECT_TEST_NAME})
