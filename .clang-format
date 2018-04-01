@@ -1,0 +1,59 @@
+Language: Cpp
+Standard: Cpp11
+
+ColumnLimit: 160
+
+TabWidth: 2
+IndentWidth: 2
+UseTab: Never
+
+# spaces settings
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceBeforeParens: ControlStatements # after if, while, for, but not function calls
+
+#BreakConstructorInitializers: BeforeComma
+
+# break before {, all the god damn time
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterClass: true
+    AfterStruct: true
+    AfterUnion: true
+    AfterControlStatement: true
+    BeforeElse: true
+    AfterEnum: true
+    AfterFunction: true
+    AfterNamespace: true
+    BeforeCatch: true
+    IndentBraces: false
+
+
+# single line settings
+AllowShortFunctionsOnASingleLine: Inline
+#AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
+
+# Misc indentation settings
+IndentCaseLabels: true
+NamespaceIndentation: All
+
+AlwaysBreakTemplateDeclarations: true
+
+# use one line per param in huge function calls / definitions
+BinPackArguments: false
+BinPackParameters: false
+
+# misc alignment settings
+AlignAfterOpenBracket: Align
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# WISHLIST: for all the below, and "allow" option, instead of just true or false
+# This would preserve alignment if it's already aligned, but not force it if it
+# wasn't. Without that option, the amount of false positives make these useless
+#AlignConsecutiveAssignments
+#AlignConsecutiveDeclarations
+#AlignEscapedNewlines
+#AlignTrailingComments
