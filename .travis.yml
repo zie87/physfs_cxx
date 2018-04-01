@@ -19,7 +19,6 @@ matrix:
       addons: *gcc7
       env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" BUILD_TYPE='Debug'
 
-    # Linux C++14 Clang builds
     - os: linux
       compiler: clang
       addons: &clang6
@@ -32,8 +31,6 @@ matrix:
       compiler: clang
       addons: *clang6
       env: MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0" BUILD_TYPE='Debug'
-
-    # OSX C++14 Clang Builds
 
     - os: osx
       osx_image: xcode8.3
