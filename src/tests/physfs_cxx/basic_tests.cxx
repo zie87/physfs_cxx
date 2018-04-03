@@ -68,6 +68,9 @@ TEST_CASE("testing wrapper for physfs", "[physfs]")
       REQUIRE(files.size() == 6);
     }
 
+    auto real_dir = physfs::get_real_dir(mount_point + "/themeinfo.txt");
+    REQUIRE_THAT(real_dir, Catch::Matchers::StartsWith(TEST_DATA));
+
     physfs::unmount(target_archive);
   }
 }

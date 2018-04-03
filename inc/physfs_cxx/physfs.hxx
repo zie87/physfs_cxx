@@ -97,6 +97,13 @@ namespace physfs
     return std::string(dir_name);
   }
 
+  inline std::string get_real_dir(const std::string& target)
+  {
+    const char* dir_name = PHYSFS_getRealDir(target.c_str());
+    PHYSFS_CXX_CHECK(dir_name != nullptr);
+    return std::string(dir_name);
+  }
+
   inline std::string get_mount_point(const std::string& target)
   {
     const char* dir_name = PHYSFS_getMountPoint(target.c_str());
@@ -117,7 +124,7 @@ namespace physfs
       PHYSFS_freeList(list);
       return files;
     }
-  } /*detail*/
+  } // namespace detail
 
   inline file_list get_search_paths() { return detail::convert_to_vector(PHYSFS_getSearchPath()); }
   inline file_list enumerate_files(const std::string& dir) { return detail::convert_to_vector(PHYSFS_enumerateFiles(dir.c_str())); }
@@ -149,6 +156,6 @@ namespace physfs
 
   inline void unmount(const std::string& target) { PHYSFS_CXX_CHECK(PHYSFS_unmount(target.c_str()) != 0); }
 
-} /*physfs*/
+} // namespace physfs
 
 #endif /*PHYSFS_CXX_PHYSFS_HXX*/
