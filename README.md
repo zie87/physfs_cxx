@@ -1,6 +1,8 @@
 # physfs_cxx
 Header only modern C++ wrapper for [physfs](https://icculus.org/physfs/)
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/070ac7666e0c40e9aede0859db118bd5)](https://www.codacy.com/app/zie87/physfs_cxx?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zie87/physfs_cxx&amp;utm_campaign=Badge_Grade)
+
 | Build status          | Systems / Compilers         |
 | ------------- | ------------------------------------------ |
 | [![CLang / GCC / XCode Builds](https://travis-ci.org/zie87/physfs_cxx.svg?branch=master)](https://travis-ci.org/zie87/physfs_cxx) | Linux (clang6 / gcc7) OSX (XCode 8.3 clang) |
