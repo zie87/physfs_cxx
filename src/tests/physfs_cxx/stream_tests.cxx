@@ -1,5 +1,7 @@
 #include <physfs_cxx/physfs.hxx>
-#include <physfs_cxx/streams.hxx>
+//#include <physfs_cxx/streams.hxx>
+
+#include <physfs_cxx/new_streams.hxx>
 
 #include <catch.hpp>
 
@@ -76,9 +78,44 @@ TEST_CASE("testing stream access for physfs", "[physfs]")
       std::string line;
       while (std::getline(infile, line))
       {
-        std::cout << line << std::endl;
         REQUIRE_THAT(line, Catch::Matchers::Equals(input_string));
       }
+    }
+    physfs::remove(test_file);
+  }
+
+  SECTION("test witchcraft write bug")
+  {
+    physfs::set_write_dir(TEST_DATA);
+    const std::string test_file("test_file_withcraft_bug.dat");
+    const int repeations = 50;
+
+    if (physfs::exists(test_file))
+    {
+      physfs::remove(test_file);
+    }
+
+    {
+      physfs::ofstream outfile(test_file);
+
+      for (int i = 0; i < repeations; ++i)
+      {
+        outfile << i << "\n";
+      }
+    }
+
+    {
+      physfs::ifstream infile(test_file);
+
+      std::string line;
+      int count = 0;
+      while (std::getline(infile, line))
+      {
+        std::string pattern = std::to_string(count++);
+        REQUIRE_THAT(line, Catch::Matchers::Equals(pattern));
+      }
+
+      REQUIRE(count == repeations);
     }
     physfs::remove(test_file);
   }
