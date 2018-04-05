@@ -156,6 +156,24 @@ namespace physfs
 
   inline void unmount(const std::string& target) { PHYSFS_CXX_CHECK(PHYSFS_unmount(target.c_str()) != 0); }
 
+  namespace detail
+  {
+    inline void set_write_dir(const char* write_dir) { PHYSFS_CXX_CHECK(PHYSFS_setWriteDir(write_dir) != 0); }
+  } // namespace detail
+
+  inline void disable_writing() { detail::set_write_dir(nullptr); }
+  inline void set_write_dir(const std::string& write_dir) { detail::set_write_dir(write_dir.c_str()); }
+
+  inline std::string get_write_dir() noexcept
+  {
+    const char* write_dir = PHYSFS_getWriteDir();
+    if (write_dir == nullptr)
+    {
+      return std::string{""};
+    }
+    return std::string{write_dir};
+  }
+
 } // namespace physfs
 
 #endif /*PHYSFS_CXX_PHYSFS_HXX*/

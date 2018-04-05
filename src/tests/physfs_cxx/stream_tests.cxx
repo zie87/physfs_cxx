@@ -3,6 +3,17 @@
 
 #include <catch.hpp>
 
+std::size_t length(physfs::ifstream& file)
+{
+  auto pos = file.tellg();
+  file.seekg(0, std::ios::end);
+  auto size = file.tellg();
+  file.seekg(pos);
+
+  // auto size = file.length();
+  return size;
+}
+
 TEST_CASE("testing stream access for physfs", "[physfs]")
 {
   physfs::init_guard guard{};
@@ -30,7 +41,7 @@ TEST_CASE("testing stream access for physfs", "[physfs]")
     REQUIRE(physfs::exists(theme_info_file));
 
     physfs::ifstream infile(theme_info_file);
-    REQUIRE(infile.length() == 19);
+    REQUIRE(length(infile) == 19);
 
     std::string line;
     std::vector<std::string> line_content;
@@ -65,6 +76,7 @@ TEST_CASE("testing stream access for physfs", "[physfs]")
       std::string line;
       while (std::getline(infile, line))
       {
+        std::cout << line << std::endl;
         REQUIRE_THAT(line, Catch::Matchers::Equals(input_string));
       }
     }
