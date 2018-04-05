@@ -266,21 +266,21 @@ namespace physfs
     virtual ~fstream() noexcept { delete rdbuf(); }
   };
 
-  class ifstream : public base_fstream, public std::iostream
+  class ifstream : public base_fstream, public std::istream
   {
   public:
-    explicit ifstream() noexcept : base_fstream(), std::iostream(new filebuf(m_file)) {}
-    explicit ifstream(const std::string& filename) : base_fstream(filename, access_mode::read), std::iostream(new filebuf(m_file)) {}
+    explicit ifstream() noexcept : base_fstream(), std::istream(new filebuf(m_file)) {}
+    explicit ifstream(const std::string& filename) : base_fstream(filename, access_mode::read), std::istream(new filebuf(m_file)) {}
     virtual ~ifstream() noexcept { delete rdbuf(); }
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) override { base_fstream::open(filename, mode); }
   };
 
-  class ofstream : public base_fstream, public std::iostream
+  class ofstream : public base_fstream, public std::ostream
   {
   public:
-    explicit ofstream() noexcept : base_fstream(), std::iostream(new filebuf(m_file)) {}
-    explicit ofstream(const std::string& filename, access_mode mode = access_mode::write) : base_fstream(filename, mode), std::iostream(new filebuf(m_file)) {}
+    explicit ofstream() noexcept : base_fstream(), std::ostream(new filebuf(m_file)) {}
+    explicit ofstream(const std::string& filename, access_mode mode = access_mode::write) : base_fstream(filename, mode), std::ostream(new filebuf(m_file)) {}
     virtual ~ofstream() noexcept { delete rdbuf(); }
 
     inline void open(const std::string& filename, access_mode mode = access_mode::write) override { base_fstream::open(filename, mode); }
