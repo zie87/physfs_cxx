@@ -167,14 +167,13 @@ namespace physfs
 
     int_type overflow(int_type c = traits_type::eof()) override
     {
-      if (c == traits_type::eof())
+      if (c != traits_type::eof())
       {
-        return 0; // no-op
-      }
-      auto character = traits_type::char_type(c);
-      if (m_file_device.write(&(character), 1) < 1)
-      {
-        return traits_type::eof();
+        auto character = traits_type::char_type(c);
+        if (m_file_device.write(&(character), 1) < 1)
+        {
+          return traits_type::eof();
+        }
       }
 
       return 0;
