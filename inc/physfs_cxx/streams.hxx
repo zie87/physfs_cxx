@@ -1,5 +1,5 @@
-#ifndef PHYSFS_CXX_NEW_STREAMS_HXX
-#define PHYSFS_CXX_NEW_STREAMS_HXX
+#ifndef PHYSFS_CXX_STREAMS_HXX
+#define PHYSFS_CXX_STREAMS_HXX
 
 #include <physfs.h>
 
@@ -93,6 +93,7 @@ namespace physfs
 
     inline std::int64_t write(const void* buffer, std::uint64_t length)
     {
+      std::cout << __FUNCTION__ << "writing: " << std::string((const char*)buffer, length) << std::endl;
       auto read_size = PHYSFS_writeBytes(m_file, buffer, length);
       PHYSFS_CXX_CHECK(read_size != -1);
       return read_size;
@@ -167,19 +168,32 @@ namespace physfs
 
     int_type overflow(int_type c = traits_type::eof()) override
     {
-      if (c != traits_type::eof())
+      if (!traits_type::eq_int_type(c, traits_type::eof()))
       {
-        auto character = traits_type::char_type(c);
-        if (m_file_device.write(&(character), 1) < 1)
+        return this->sputc(c);
+      }
+
+      return traits_type::not_eof(c);
+    }
+
+    int_type sputc(char_type ch)
+    {
+      if (ch != traits_type::eof())
+      {
+        if (m_file_device.write(&(ch), 1) < 1)
         {
           return traits_type::eof();
         }
       }
 
-      return 0;
+      return traits_type::to_int_type(ch);
     }
 
-    std::size_t xsputn(const char* s, std::size_t n) { return m_file_device.write(s, n); }
+    int_type xsputn(const char* s, int_type n)
+    {
+      std::cout << __FUNCTION__ << "content: " << std::string(s, n) << std::endl;
+      return m_file_device.write(s, n);
+    }
     std::size_t xsgetn(char* s, std::size_t n) { return m_file_device.read(s, n); }
 
     pos_type seekoff(off_type pos, std::ios_base::seekdir dir, std::ios_base::openmode mode) override
@@ -288,4 +302,4 @@ namespace physfs
 
 } // namespace physfs
 
-#endif /*PHYSFS_CXX_NEW_STREAMS_HXX*/
+#endif /*PHYSFS_CXX_STREAMS_HXX*/
