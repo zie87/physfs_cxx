@@ -1,7 +1,5 @@
 #include <physfs_cxx/physfs.hxx>
-//#include <physfs_cxx/streams.hxx>
-
-#include <physfs_cxx/new_streams.hxx>
+#include <physfs_cxx/streams.hxx>
 
 #include <catch.hpp>
 
