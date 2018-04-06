@@ -10,7 +10,6 @@ std::size_t length(physfs::ifstream& file)
   auto size = file.tellg();
   file.seekg(pos);
 
-  // auto size = file.length();
   return size;
 }
 
@@ -109,11 +108,11 @@ TEST_CASE("testing stream access for physfs", "[physfs]")
       int count = 0;
       while (std::getline(infile, line))
       {
-        std::string pattern = std::to_string(++count);
+        std::string pattern = std::to_string(count++);
         REQUIRE_THAT(line, Catch::Matchers::Equals(pattern));
       }
 
-      REQUIRE(count == (repeations - 1));
+      REQUIRE(count == repeations);
     }
     physfs::remove(test_file);
   }

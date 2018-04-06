@@ -3,198 +3,119 @@
 
 #include <physfs.h>
 
+#include "file_device.hxx"
+
 #include <fstream>
 #include <iostream>
 #include <vector>
 
-#include "error.hxx"
-
 namespace physfs
 {
-  enum class access_mode : int
-  {
-    read,
-    write,
-    append
-  };
 
-  struct file_device
+  template <typename CharT, typename Traits = std::char_traits<CharT>>
+  class basic_fstreambuf : public std::basic_streambuf<CharT, Traits>
   {
+    static const unsigned int buffer_size = 32;
+    static const unsigned int put_back_amount = 2;
+
   public:
-    explicit file_device() noexcept : m_file(nullptr), m_filename(){};
-    file_device(const std::string& file_path, access_mode mode) : file_device() { open(file_path, mode); }
+    typedef CharT char_type;
+    typedef Traits traits_type;
+    typedef typename traits_type::int_type int_type;
+    typedef typename traits_type::off_type off_type;
+    typedef typename traits_type::pos_type pos_type;
 
-    file_device(const file_device&) = delete;
-    file_device& operator=(const file_device&) = delete;
+    basic_fstreambuf() noexcept : m_write_buffer(nullptr), m_read_buffer(nullptr) {}
+    basic_fstreambuf(const std::string& filename, access_mode mode) : basic_fstreambuf() { open(filename, mode); }
+    ~basic_fstreambuf() { close(); }
 
-    file_device(file_device&&) = delete;
-    file_device& operator=(file_device&&) = delete;
-
-    ~file_device() noexcept
+    inline basic_fstreambuf* open(const std::string& filename, access_mode mode)
     {
-      if (is_open())
-      {
-        try
-        {
-          close();
-        }
-        catch (exception& e)
-        {
-          std::cerr << __FUNCTION__ << " Couldn't close file \"" << m_filename << "\"! : " << e.what() << std::endl;
-        }
-        catch (...)
-        {
-          std::cerr << __FUNCTION__ << " Couldn't close file \"" << m_filename << "\"! unexpected exception!" << std::endl;
-        }
-      }
+      m_file_device.open(filename, mode);
+      create_buffers(mode);
+      return this;
     }
 
-    inline void open(const std::string& filename, access_mode mode)
-    {
-      if (is_open())
-      {
-        close();
-      }
-
-      PHYSFS_File* file = nullptr;
-      if (mode == access_mode::read)
-      {
-        file = PHYSFS_openRead(filename.c_str());
-      }
-      else if (mode == access_mode::write)
-      {
-        file = PHYSFS_openWrite(filename.c_str());
-      }
-      else if (mode == access_mode::append)
-      {
-        file = PHYSFS_openAppend(filename.c_str());
-      }
-      PHYSFS_CXX_CHECK(file != nullptr);
-
-      m_file = file;
-      m_filename = filename;
-    }
-
-    inline void close()
-    {
-      PHYSFS_CXX_CHECK(PHYSFS_close(m_file) != 0);
-      m_file = nullptr;
-    }
-
-    inline bool is_open() const noexcept { return m_file != nullptr; }
-    inline bool eof() const noexcept { return (PHYSFS_eof(m_file) != 0); }
-
-    inline std::int64_t read(void* buffer, std::uint64_t length)
-    {
-      auto read_size = PHYSFS_readBytes(m_file, buffer, length);
-      PHYSFS_CXX_CHECK(read_size != -1);
-      return read_size;
-    }
-
-    inline std::int64_t write(const void* buffer, std::uint64_t length)
-    {
-      std::cout << __FUNCTION__ << "writing: " << std::string((const char*)buffer, length) << std::endl;
-      auto read_size = PHYSFS_writeBytes(m_file, buffer, length);
-      PHYSFS_CXX_CHECK(read_size != -1);
-      return read_size;
-    }
-
-    inline std::int64_t tell()
-    {
-      auto offset = PHYSFS_tell(m_file);
-      PHYSFS_CXX_CHECK(offset != -1);
-      return offset;
-    }
-
-    inline bool flush()
-    {
-      PHYSFS_CXX_CHECK(PHYSFS_flush(m_file) != 0);
-      return true;
-    }
-
-    inline void seek(std::uint64_t pos) { PHYSFS_CXX_CHECK(PHYSFS_seek(m_file, pos) != 0); }
-
-    inline std::int64_t file_length()
-    {
-
-      auto length = PHYSFS_fileLength(m_file);
-      PHYSFS_CXX_CHECK(length != -1);
-      return length;
-    }
-
-  private:
-    PHYSFS_File* m_file;
-    std::string m_filename;
-  };
-
-  class filebuf : public std::streambuf
-  {
-  public:
-    using char_type = typename std::streambuf::char_type;
-    using int_type = typename std::streambuf::int_type;
-
-    filebuf(const filebuf& other) = delete;
-    filebuf& operator=(const filebuf& other) = delete;
-
-    filebuf(file_device& file, std::size_t buffer_size = 2048) : m_file_device(file), m_buffer(nullptr), m_buffer_size(buffer_size)
-    {
-
-      m_buffer = new char[buffer_size];
-      char* end = m_buffer + buffer_size;
-      setg(end, end, end);
-      setp(m_buffer, end);
-    }
-
-    ~filebuf()
+    inline basic_fstreambuf* close()
     {
       sync();
-      delete[] m_buffer;
+      destroy_buffers();
+      m_file_device.close();
+
+      return this;
     }
 
-    int_type underflow() override
-    {
-      if (m_file_device.eof())
-      {
-        return traits_type::eof();
-      }
-      auto bytes_read = m_file_device.read(m_buffer, m_buffer_size);
-      if (bytes_read < 1)
-      {
-        return traits_type::eof();
-      }
-      setg(m_buffer, m_buffer, m_buffer + bytes_read);
-      return traits_type::to_int_type(*gptr());
-    }
+    inline bool is_open() const noexcept { return m_file_device.is_open(); }
 
-    int_type overflow(int_type c = traits_type::eof()) override
+  protected:
+    inline int_type overflow(int_type c) override
     {
-      if (!traits_type::eq_int_type(c, traits_type::eof()))
-      {
+      if (!empty_buffer())
+        return traits_type::eof();
+      else if (!traits_type::eq_int_type(c, traits_type::eof()))
         return this->sputc(c);
-      }
-
-      return traits_type::not_eof(c);
+      else
+        return traits_type::not_eof(c);
     }
 
-    int_type sputc(char_type ch)
+    inline int_type underflow() override
     {
-      if (ch != traits_type::eof())
+      if (this->gptr() < this->egptr() || fill_buffer())
+        return traits_type::to_int_type(*this->gptr());
+      else
+        return traits_type::eof();
+    }
+
+    int_type pbackfail(int_type c = traits_type::eof()) override
+    {
+      if (this->gptr() != this->eback())
       {
-        if (m_file_device.write(&(ch), 1) < 1)
-        {
-          return traits_type::eof();
-        }
+        this->gbump(-1);
+        if (!traits_type::eq_int_type(c, traits_type::eof())) *this->gptr() = traits_type::to_char_type(c);
+        return traits_type::not_eof(c);
       }
-
-      return traits_type::to_int_type(ch);
+      else
+        return traits_type::eof();
     }
 
-    int_type xsputn(const char* s, int_type n)
+    inline int sync() override { return (is_open() && empty_buffer()) ? 0 : -1; }
+
+    std::streamsize xsputn(const char_type* s, std::streamsize n) override
     {
-      std::cout << __FUNCTION__ << "content: " << std::string(s, n) << std::endl;
-      return m_file_device.write(s, n);
+      std::streamsize done = 0;
+      while (done < n)
+      {
+        if (std::streamsize nbuf = this->epptr() - this->pptr())
+        {
+          nbuf = std::min(nbuf, n - done);
+          traits_type::copy(this->pptr(), s + done, nbuf);
+          this->pbump(nbuf);
+          done += nbuf;
+        }
+        else if (!empty_buffer())
+          break;
+      }
+      return done;
     }
-    std::size_t xsgetn(char* s, std::size_t n) { return m_file_device.read(s, n); }
+
+    inline std::streamsize write(const char_type* s, std::streamsize n)
+    {
+      std::streamsize nwritten = m_file_device.write(s, n * sizeof(char_type));
+      return nwritten /= sizeof(char_type);
+    }
+
+    inline std::streamsize read(char_type* s, std::streamsize n)
+    {
+      std::streamsize nread = m_file_device.read(s, n * sizeof(char_type));
+      return nread /= sizeof(char_type);
+    }
+
+    inline std::streamsize showmanyc() override
+    {
+      int avail = 0;
+      if (sizeof(char_type) == 1) avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
+      return std::streamsize(avail);
+    }
 
     pos_type seekoff(off_type pos, std::ios_base::seekdir dir, std::ios_base::openmode mode) override
     {
@@ -205,7 +126,7 @@ namespace physfs
       else if (dir == std::ios_base::cur)
       {
         auto current_pos = m_file_device.tell();
-        m_file_device.seek((current_pos + pos) - (egptr() - gptr()));
+        m_file_device.seek((current_pos + pos) - (this->egptr() - this->gptr()));
       }
       else if (dir == std::ios_base::end)
       {
@@ -215,90 +136,206 @@ namespace physfs
 
       if (mode & std::ios_base::in)
       {
-        setg(egptr(), egptr(), egptr());
+        this->setg(this->egptr(), this->egptr(), this->egptr());
       }
       if (mode & std::ios_base::out)
       {
-        setp(m_buffer, m_buffer + m_buffer_size - 1);
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
       return m_file_device.tell();
     }
 
-    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
+    inline pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
     {
       m_file_device.seek(pos);
       if (mode & std::ios_base::in)
       {
-        setg(egptr(), egptr(), egptr());
+        this->setg(this->egptr(), this->egptr(), this->egptr());
       }
       if (mode & std::ios_base::out)
       {
-        setp(m_buffer, m_buffer + m_buffer_size - 1);
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
       return m_file_device.tell();
     }
 
-    int sync() override { return (overflow() == 0) ? 0 : -1; }
-
-  private:
-    file_device& m_file_device;
-
-    char* m_buffer;
-    const size_t m_buffer_size;
-  };
-
-  class base_fstream
-  {
   protected:
-    file_device m_file;
-
-  public:
-    explicit base_fstream() noexcept : m_file() {}
-    explicit base_fstream(const std::string& filename, access_mode mode) : m_file(filename, mode) {}
-
-    base_fstream(const base_fstream&) = delete;
-    base_fstream& operator=(const base_fstream&) = delete;
-
-    inline bool is_open() const noexcept { return m_file.is_open(); }
-    inline virtual void open(const std::string& filename, access_mode mode) { m_file.open(filename, mode); }
-    inline void close()
+    inline void create_buffers(access_mode mode)
     {
-      if (is_open())
+      if (mode == access_mode::read)
       {
-        close();
+        delete[] m_read_buffer;
+        m_read_buffer = new char_type[buffer_size];
+        this->setg(m_read_buffer + put_back_amount, m_read_buffer + put_back_amount, m_read_buffer + put_back_amount);
+      }
+      else
+      {
+        delete[] m_write_buffer;
+        m_write_buffer = new char_type[buffer_size];
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
     }
 
-    virtual ~base_fstream() noexcept {}
+    inline void destroy_buffers()
+    {
+      if (m_read_buffer != nullptr)
+      {
+        this->setg(nullptr, nullptr, nullptr);
+        delete[] m_read_buffer;
+        m_read_buffer = nullptr;
+      }
+
+      if (m_write_buffer != nullptr)
+      {
+        this->setp(nullptr, nullptr);
+        delete[] m_write_buffer;
+        m_write_buffer = nullptr;
+      }
+    }
+
+    /// Writes buffered characters to the process' stdin pipe.
+    inline bool empty_buffer()
+    {
+      const std::streamsize count = this->pptr() - this->pbase();
+      if (count > 0)
+      {
+        const std::streamsize written = this->write(this->m_write_buffer, count);
+        if (written > 0)
+        {
+          if (const std::streamsize unwritten = count - written) traits_type::move(this->pbase(), this->pbase() + written, unwritten);
+          this->pbump(-written);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    bool fill_buffer()
+    {
+      const std::streamsize pb1 = this->gptr() - this->eback();
+      const std::streamsize pb2 = put_back_amount;
+      const std::streamsize npb = std::min(pb1, pb2);
+
+      char_type* const rbuf = m_read_buffer;
+
+      if (npb) traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
+
+      std::streamsize rc = -1;
+
+      rc = read(rbuf + put_back_amount, buffer_size - put_back_amount);
+
+      if (rc > 0)
+      {
+        this->setg(rbuf + put_back_amount - npb, rbuf + put_back_amount, rbuf + put_back_amount + rc);
+        return true;
+      }
+      else
+      {
+        this->setg(nullptr, nullptr, nullptr);
+        return false;
+      }
+    }
+
+  private:
+    basic_fstreambuf(const basic_fstreambuf&);
+    basic_fstreambuf& operator=(const basic_fstreambuf&);
+
+    file_device m_file_device;
+
+    char_type* m_write_buffer;
+    char_type* m_read_buffer;
   };
 
-  class fstream : public base_fstream, public std::iostream
+  template <typename CharT, typename Traits = std::char_traits<CharT>>
+  class fstream_common : virtual public std::basic_ios<CharT, Traits>
   {
+  protected:
+    typedef basic_fstreambuf<CharT, Traits> streambuf_type;
+
+    fstream_common() noexcept : std::basic_ios<CharT, Traits>(nullptr), m_filename(), m_buffer() { this->std::basic_ios<CharT, Traits>::rdbuf(&m_buffer); }
+    fstream_common(const std::string& filename, access_mode mode) : std::basic_ios<CharT, Traits>(nullptr), m_filename(filename), m_buffer()
+    {
+      this->std::basic_ios<CharT, Traits>::rdbuf(&m_buffer);
+      do_open(filename, mode);
+    }
+
+    virtual ~fstream_common() = default;
+
+    inline void do_open(const std::string& filename, access_mode mode)
+    {
+      m_buffer.open((m_filename = filename), mode);
+      if (!m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+    }
+
   public:
-    explicit fstream() noexcept : base_fstream(), std::iostream(new filebuf(m_file)) {}
-    explicit fstream(const std::string& filename, access_mode mode = access_mode::read) : base_fstream(filename, mode), std::iostream(new filebuf(m_file)) {}
-    virtual ~fstream() noexcept { delete rdbuf(); }
+    inline void close()
+    {
+      m_buffer.close();
+      if (m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+    }
+
+    inline bool is_open() const { return m_buffer.is_open(); }
+
+    inline std::string filename() const noexcept { return m_filename; }
+    inline streambuf_type* rdbuf() const { return const_cast<streambuf_type*>(&m_buffer); }
+
+  protected:
+    std::string m_filename;
+    streambuf_type m_buffer;
   };
 
-  class ifstream : public base_fstream, public std::istream
+  template <typename CharT, typename Traits = std::char_traits<CharT>>
+  class basic_ifstream : public std::basic_istream<CharT, Traits>, public fstream_common<CharT, Traits>
   {
-  public:
-    explicit ifstream() noexcept : base_fstream(), std::istream(new filebuf(m_file)) {}
-    explicit ifstream(const std::string& filename) : base_fstream(filename, access_mode::read), std::istream(new filebuf(m_file)) {}
-    virtual ~ifstream() noexcept { delete rdbuf(); }
+    typedef std::basic_istream<CharT, Traits> istream_type;
+    typedef fstream_common<CharT, Traits> stream_base_type;
 
-    inline void open(const std::string& filename, access_mode mode = access_mode::read) override { base_fstream::open(filename, mode); }
+    using stream_base_type::m_buffer;
+
+  public:
+    basic_ifstream() noexcept : istream_type(nullptr), stream_base_type() {}
+    explicit basic_ifstream(const std::string& filename, access_mode mode = access_mode::read) : istream_type(nullptr), stream_base_type(filename, mode) {}
+    ~basic_ifstream() {}
+
+    inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };
 
-  class ofstream : public base_fstream, public std::ostream
+  template <typename CharT, typename Traits = std::char_traits<CharT>>
+  class basic_ofstream : public std::basic_ostream<CharT, Traits>, public fstream_common<CharT, Traits>
   {
-  public:
-    explicit ofstream() noexcept : base_fstream(), std::ostream(new filebuf(m_file)) {}
-    explicit ofstream(const std::string& filename, access_mode mode = access_mode::write) : base_fstream(filename, mode), std::ostream(new filebuf(m_file)) {}
-    virtual ~ofstream() noexcept { delete rdbuf(); }
+    typedef std::basic_ostream<CharT, Traits> ostream_type;
+    typedef fstream_common<CharT, Traits> stream_base_type;
 
-    inline void open(const std::string& filename, access_mode mode = access_mode::write) override { base_fstream::open(filename, mode); }
+    using stream_base_type::m_buffer;
+
+  public:
+    basic_ofstream() noexcept : ostream_type(nullptr), stream_base_type() {}
+    explicit basic_ofstream(const std::string& filename, access_mode mode = access_mode::write) : ostream_type(nullptr), stream_base_type(filename, mode) {}
+    ~basic_ofstream() {}
+
+    inline void open(const std::string& filename, access_mode mode = access_mode::write) { this->do_open(filename, mode); }
   };
+
+  template <typename CharT, typename Traits = std::char_traits<CharT>>
+  class basic_fstream : public std::basic_iostream<CharT, Traits>, public fstream_common<CharT, Traits>
+  {
+    typedef std::basic_iostream<CharT, Traits> iostream_type;
+    typedef fstream_common<CharT, Traits> stream_base_type;
+
+    using stream_base_type::m_buffer;
+
+  public:
+    basic_fstream() : iostream_type(nullptr), stream_base_type() {}
+    explicit basic_fstream(const std::string& filename, access_mode mode = access_mode::read) : iostream_type(nullptr), stream_base_type(filename, mode) {}
+    ~basic_fstream() {}
+
+    inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
+  };
+
+  typedef basic_fstreambuf<char> fstreambuf;
+  typedef basic_ifstream<char> ifstream;
+  typedef basic_ofstream<char> ofstream;
+  typedef basic_fstream<char> fstream;
 
 } // namespace physfs
 
