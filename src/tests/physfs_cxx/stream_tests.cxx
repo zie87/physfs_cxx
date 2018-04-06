@@ -10,7 +10,6 @@ std::size_t length(physfs::ifstream& file)
   auto size = file.tellg();
   file.seekg(pos);
 
-  // auto size = file.length();
   return size;
 }
 

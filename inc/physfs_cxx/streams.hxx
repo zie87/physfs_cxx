@@ -12,33 +12,31 @@
 namespace physfs
 {
 
-  /// Class template for stream buffer.
   template <typename CharT, typename Traits = std::char_traits<CharT>>
   class basic_fstreambuf : public std::basic_streambuf<CharT, Traits>
   {
-    static const unsigned int bufsz = 32; ///< Size of fstreambuf buffers.
-    static const unsigned int pbsz = 2;   ///< Number of putback characters kept.
+    static const unsigned int buffer_size = 32;
+    static const unsigned int put_back_amount = 2;
 
   public:
-    // Type definitions for dependent types
     typedef CharT char_type;
     typedef Traits traits_type;
     typedef typename traits_type::int_type int_type;
     typedef typename traits_type::off_type off_type;
     typedef typename traits_type::pos_type pos_type;
 
-    basic_fstreambuf() : wbuffer_(nullptr), rsrc_(rsrc_out) { init_rbuffers(); }
+    basic_fstreambuf() noexcept : m_write_buffer(nullptr), m_read_buffer(nullptr) {}
     basic_fstreambuf(const std::string& filename, access_mode mode) : basic_fstreambuf() { open(filename, mode); }
     ~basic_fstreambuf() { close(); }
 
-    basic_fstreambuf* open(const std::string& filename, access_mode mode)
+    inline basic_fstreambuf* open(const std::string& filename, access_mode mode)
     {
       m_file_device.open(filename, mode);
       create_buffers(mode);
       return this;
     }
 
-    basic_fstreambuf* close()
+    inline basic_fstreambuf* close()
     {
       sync();
       destroy_buffers();
@@ -47,11 +45,10 @@ namespace physfs
       return this;
     }
 
-    /// Report whether the stream buffer has been initialised.
     inline bool is_open() const noexcept { return m_file_device.is_open(); }
 
   protected:
-    int_type overflow(int_type c) override
+    inline int_type overflow(int_type c) override
     {
       if (!empty_buffer())
         return traits_type::eof();
@@ -61,8 +58,7 @@ namespace physfs
         return traits_type::not_eof(c);
     }
 
-    /// Transfer characters from the pipe when the character buffer is empty.
-    int_type underflow() override
+    inline int_type underflow() override
     {
       if (this->gptr() < this->egptr() || fill_buffer())
         return traits_type::to_int_type(*this->gptr());
@@ -70,7 +66,6 @@ namespace physfs
         return traits_type::eof();
     }
 
-    /// Make a character available to be returned by the next extraction.
     int_type pbackfail(int_type c = traits_type::eof()) override
     {
       if (this->gptr() != this->eback())
@@ -103,21 +98,18 @@ namespace physfs
       return done;
     }
 
-    /// Insert a sequence of characters into the pipe.
-    std::streamsize write(const char_type* s, std::streamsize n)
+    inline std::streamsize write(const char_type* s, std::streamsize n)
     {
       std::streamsize nwritten = m_file_device.write(s, n * sizeof(char_type));
       return nwritten /= sizeof(char_type);
     }
 
-    /// Extract a sequence of characters from the pipe.
-    std::streamsize read(char_type* s, std::streamsize n)
+    inline std::streamsize read(char_type* s, std::streamsize n)
     {
       std::streamsize nread = m_file_device.read(s, n * sizeof(char_type));
       return nread /= sizeof(char_type);
     }
 
-    /// Report how many characters can be read from active input without blocking.
     std::streamsize showmanyc() override
     {
       int avail = 0;
@@ -148,7 +140,7 @@ namespace physfs
       }
       if (mode & std::ios_base::out)
       {
-        this->setp(wbuffer_, wbuffer_ + bufsz);
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
       return m_file_device.tell();
     }
@@ -162,50 +154,42 @@ namespace physfs
       }
       if (mode & std::ios_base::out)
       {
-        this->setp(wbuffer_, wbuffer_ + bufsz);
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
       return m_file_device.tell();
     }
 
   protected:
-    /// Enumerated type to indicate whether stdout or stderr is to be read.
-    enum buf_read_src
-    {
-      rsrc_out = 0,
-      rsrc_err = 1
-    };
-
     void create_buffers(access_mode mode)
     {
       if (mode == access_mode::read)
       {
-        delete[] rbuffer_[rsrc_out];
-        rbuffer_[rsrc_out] = new char_type[bufsz];
-        rsrc_ = rsrc_out;
-        this->setg(rbuffer_[rsrc_out] + pbsz, rbuffer_[rsrc_out] + pbsz, rbuffer_[rsrc_out] + pbsz);
+        delete[] m_read_buffer;
+        m_read_buffer = new char_type[buffer_size];
+        this->setg(m_read_buffer + put_back_amount, m_read_buffer + put_back_amount, m_read_buffer + put_back_amount);
       }
       else
       {
-        delete[] wbuffer_;
-        wbuffer_ = new char_type[bufsz];
-        this->setp(wbuffer_, wbuffer_ + bufsz);
+        delete[] m_write_buffer;
+        m_write_buffer = new char_type[buffer_size];
+        this->setp(m_write_buffer, m_write_buffer + buffer_size);
       }
     }
 
     void destroy_buffers()
     {
-      if (rbuffer_ != nullptr)
+      if (m_read_buffer != nullptr)
       {
-        if (rsrc_ == rsrc_out) this->setg(nullptr, nullptr, nullptr);
-        delete[] rbuffer_[rsrc_out];
-        rbuffer_[rsrc_out] = nullptr;
+        this->setg(nullptr, nullptr, nullptr);
+        delete[] m_read_buffer;
+        m_read_buffer = nullptr;
       }
 
-      if (wbuffer_ != nullptr)
+      if (m_write_buffer != nullptr)
       {
         this->setp(nullptr, nullptr);
-        delete[] wbuffer_;
-        wbuffer_ = nullptr;
+        delete[] m_write_buffer;
+        m_write_buffer = nullptr;
       }
     }
 
@@ -215,7 +199,7 @@ namespace physfs
       const std::streamsize count = this->pptr() - this->pbase();
       if (count > 0)
       {
-        const std::streamsize written = this->write(this->wbuffer_, count);
+        const std::streamsize written = this->write(this->m_write_buffer, count);
         if (written > 0)
         {
           if (const std::streamsize unwritten = count - written) traits_type::move(this->pbase(), this->pbase() + written, unwritten);
@@ -229,20 +213,20 @@ namespace physfs
     bool fill_buffer()
     {
       const std::streamsize pb1 = this->gptr() - this->eback();
-      const std::streamsize pb2 = pbsz;
+      const std::streamsize pb2 = put_back_amount;
       const std::streamsize npb = std::min(pb1, pb2);
 
-      char_type* const rbuf = rbuffer();
+      char_type* const rbuf = m_read_buffer;
 
-      if (npb) traits_type::move(rbuf + pbsz - npb, this->gptr() - npb, npb);
+      if (npb) traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
 
       std::streamsize rc = -1;
 
-      rc = read(rbuf + pbsz, bufsz - pbsz);
+      rc = read(rbuf + put_back_amount, buffer_size - put_back_amount);
 
       if (rc > 0)
       {
-        this->setg(rbuf + pbsz - npb, rbuf + pbsz, rbuf + pbsz + rc);
+        this->setg(rbuf + put_back_amount - npb, rbuf + put_back_amount, rbuf + put_back_amount + rc);
         return true;
       }
       else
@@ -252,38 +236,14 @@ namespace physfs
       }
     }
 
-    inline char_type* rbuffer() { return rbuffer_[rsrc_]; }
-
-    buf_read_src switch_read_buffer(buf_read_src src)
-    {
-      if (rsrc_ != src)
-      {
-        char_type* tmpbufstate[] = {this->eback(), this->gptr(), this->egptr()};
-        this->setg(rbufstate_[0], rbufstate_[1], rbufstate_[2]);
-        for (std::size_t i = 0; i < 3; ++i)
-          rbufstate_[i] = tmpbufstate[i];
-        rsrc_ = src;
-      }
-      return rsrc_;
-    }
-
   private:
     basic_fstreambuf(const basic_fstreambuf&);
     basic_fstreambuf& operator=(const basic_fstreambuf&);
 
-    void init_rbuffers()
-    {
-      rbuffer_[rsrc_out] = rbuffer_[rsrc_err] = nullptr;
-      rbufstate_[0] = rbufstate_[1] = rbufstate_[2] = nullptr;
-    }
-
     file_device m_file_device;
 
-    char_type* wbuffer_;
-    char_type* rbuffer_[2];
-    char_type* rbufstate_[3];
-
-    buf_read_src rsrc_;
+    char_type* m_write_buffer;
+    char_type* m_read_buffer;
   };
 
   template <typename CharT, typename Traits = std::char_traits<CharT>>
