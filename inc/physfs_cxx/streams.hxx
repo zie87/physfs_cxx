@@ -78,7 +78,7 @@ namespace physfs
         return traits_type::eof();
     }
 
-    inline int sync() { return (is_open() && empty_buffer()) ? 0 : -1; }
+    inline int sync() override { return (is_open() && empty_buffer()) ? 0 : -1; }
 
     std::streamsize xsputn(const char_type* s, std::streamsize n) override
     {
@@ -110,7 +110,7 @@ namespace physfs
       return nread /= sizeof(char_type);
     }
 
-    std::streamsize showmanyc() override
+    inline std::streamsize showmanyc() override
     {
       int avail = 0;
       if (sizeof(char_type) == 1) avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
@@ -145,7 +145,7 @@ namespace physfs
       return m_file_device.tell();
     }
 
-    pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
+    inline pos_type seekpos(pos_type pos, std::ios_base::openmode mode) override
     {
       m_file_device.seek(pos);
       if (mode & std::ios_base::in)
@@ -160,7 +160,7 @@ namespace physfs
     }
 
   protected:
-    void create_buffers(access_mode mode)
+    inline void create_buffers(access_mode mode)
     {
       if (mode == access_mode::read)
       {
@@ -176,7 +176,7 @@ namespace physfs
       }
     }
 
-    void destroy_buffers()
+    inline void destroy_buffers()
     {
       if (m_read_buffer != nullptr)
       {
@@ -194,7 +194,7 @@ namespace physfs
     }
 
     /// Writes buffered characters to the process' stdin pipe.
-    bool empty_buffer()
+    inline bool empty_buffer()
     {
       const std::streamsize count = this->pptr() - this->pbase();
       if (count > 0)
@@ -252,7 +252,7 @@ namespace physfs
   protected:
     typedef basic_fstreambuf<CharT, Traits> streambuf_type;
 
-    fstream_common() : std::basic_ios<CharT, Traits>(nullptr), m_filename(), m_buffer() { this->std::basic_ios<CharT, Traits>::rdbuf(&m_buffer); }
+    fstream_common() noexcept : std::basic_ios<CharT, Traits>(nullptr), m_filename(), m_buffer() { this->std::basic_ios<CharT, Traits>::rdbuf(&m_buffer); }
     fstream_common(const std::string& filename, access_mode mode) : std::basic_ios<CharT, Traits>(nullptr), m_filename(filename), m_buffer()
     {
       this->std::basic_ios<CharT, Traits>::rdbuf(&m_buffer);
@@ -280,19 +280,9 @@ namespace physfs
     inline streambuf_type* rdbuf() const { return const_cast<streambuf_type*>(&m_buffer); }
 
   protected:
-    std::string m_filename;  ///< The command used to start the process.
-    streambuf_type m_buffer; ///< The stream buffer.
+    std::string m_filename;
+    streambuf_type m_buffer;
   };
-
-  /**
-   * @class basic_ifstream
-   * @brief Class template for Input PStreams.
-   *
-   * Reading from an ifstream reads the command's standard output and/or
-   * standard error (depending on how the ifstream is opened)
-   * and the command's standard input is the same as that of the process
-   * that created the object, unless altered by the command itself.
-   */
 
   template <typename CharT, typename Traits = std::char_traits<CharT>>
   class basic_ifstream : public std::basic_istream<CharT, Traits>, public fstream_common<CharT, Traits>
@@ -303,7 +293,7 @@ namespace physfs
     using stream_base_type::m_buffer;
 
   public:
-    basic_ifstream() : istream_type(nullptr), stream_base_type() {}
+    basic_ifstream() noexcept : istream_type(nullptr), stream_base_type() {}
     explicit basic_ifstream(const std::string& filename, access_mode mode = access_mode::read) : istream_type(nullptr), stream_base_type(filename, mode) {}
     ~basic_ifstream() {}
 
@@ -319,7 +309,7 @@ namespace physfs
     using stream_base_type::m_buffer;
 
   public:
-    basic_ofstream() : ostream_type(nullptr), stream_base_type() {}
+    basic_ofstream() noexcept : ostream_type(nullptr), stream_base_type() {}
     explicit basic_ofstream(const std::string& filename, access_mode mode = access_mode::write) : ostream_type(nullptr), stream_base_type(filename, mode) {}
     ~basic_ofstream() {}
 
@@ -332,7 +322,7 @@ namespace physfs
     typedef std::basic_iostream<CharT, Traits> iostream_type;
     typedef fstream_common<CharT, Traits> stream_base_type;
 
-    using stream_base_type::m_buffer; // declare name in this scope
+    using stream_base_type::m_buffer;
 
   public:
     basic_fstream() : iostream_type(nullptr), stream_base_type() {}
