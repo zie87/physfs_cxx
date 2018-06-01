@@ -3,10 +3,9 @@
 
 #include <physfs.h>
 
+#include <iostream>
 #include <string>
 #include <vector>
-
-#include <iostream>
 
 #include "error.hxx"
 

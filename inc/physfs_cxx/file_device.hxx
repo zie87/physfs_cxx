@@ -19,7 +19,7 @@ namespace physfs
   {
   public:
     explicit file_device() noexcept : m_file(nullptr), m_filename(){};
-    file_device(const std::string& file_path, access_mode mode) : file_device() { open(file_path, mode); }
+    file_device(const std::string& file_path, access_mode mode) : m_file(nullptr), m_filename() { open(file_path, mode); }
 
     file_device(const file_device&) = delete;
     file_device& operator=(const file_device&) = delete;
