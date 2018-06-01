@@ -51,6 +51,6 @@ build:
   verbosity: normal             # MSBuild verbosity level {quiet|minimal|normal|detailed}
 
 test_script:
-   - cd build
-   - set PATH=%PREFIX%\lib;%PATH%
-   - ctest -V -C %CONFIGURATION%
+   #- cd build
+   #- set PATH=%PREFIX%\lib;%PATH%
+   #- ctest -V -C %CONFIGURATION%
