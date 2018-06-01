@@ -12,7 +12,7 @@
 
 namespace physfs
 {
-  enum class filetype : std::underlying_type_t<PHYSFS_FileType>
+  enum class filetype
   {
     regular = PHYSFS_FILETYPE_REGULAR,
     directory = PHYSFS_FILETYPE_DIRECTORY,
@@ -48,8 +48,8 @@ namespace physfs
 
   using file_list = std::vector<std::string>;
 
-  inline void init(const char* argv0 = nullptr) { PHYSFS_CXX_CHECK(PHYSFS_init(argv0) != 0); }
-  inline void init(const std::string& argv0) { init(argv0.c_str()); }
+  inline void init(const char* executable_name = nullptr) { PHYSFS_CXX_CHECK(PHYSFS_init(executable_name) != 0); }
+  inline void init(const std::string& executable_name) { init(executable_name.c_str()); }
 
   inline void deinit() { PHYSFS_CXX_CHECK(PHYSFS_deinit() != 0); }
   inline bool is_init() noexcept { return (PHYSFS_isInit() != 0); }
