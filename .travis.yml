@@ -61,7 +61,12 @@ install:
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
-  - cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -Wdev
+  - |-
+    if [[ ${BUILD_TARGET} == 'Coverage' ]]; then
+      cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -Wdev -DUSE_GCOV=ON
+    else
+      cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -Wdev
+    fi
   
 script:
   - cmake --build ./build --target all -- -j 3
