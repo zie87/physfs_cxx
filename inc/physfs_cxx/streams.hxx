@@ -39,10 +39,12 @@ namespace physfs
 
     inline basic_fstreambuf* close()
     {
-      sync();
-      destroy_buffers();
-      m_file_device.close();
-
+      if (is_open())
+      {
+        sync();
+        destroy_buffers();
+        m_file_device.close();
+      }
       return this;
     }
 
