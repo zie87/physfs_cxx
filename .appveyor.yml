@@ -1,0 +1,56 @@
+# version string format -- This will be overwritten later anyway
+version: "{branch}.{build}"
+
+os:
+  - Visual Studio 2017
+
+platform:
+  - x64
+ 
+configuration:
+  - Release
+  - Debug
+
+environment:
+    PREFIX: c:\usr_msvc
+
+init:
+  - git config --global core.autocrlf input
+  # Set build version to git commit-hash
+  - ps: Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_BRANCH) - $($env:APPVEYOR_REPO_COMMIT)"
+
+install:
+  - git submodule update --init --recursive
+
+before_build:
+  - if exist %PREFIX% set NEEDDEPENDS=rem
+
+  # Depends
+  - |-
+    %NEEDDEPENDS% mkdir %PREFIX%\include
+    %NEEDDEPENDS% mkdir %PREFIX%\lib
+    %NEEDDEPENDS% cd %TEMP%
+
+  - |-
+    curl -fsSL -o physfs.tar.bz2 https://icculus.org/physfs/downloads/physfs-3.0.1.tar.bz2
+    7z x physfs.tar.bz2 -so | 7z x -si -ttar > nul
+    move physfs-3.0.1 physfs
+    cd physfs
+    cmake -H. -BBuild -A%PLATFORM% -DCMAKE_INSTALL_PREFIX=%PREFIX% -DPHYSFS_BUILD_TEST=OFF
+    cmake --build ./Build --target install
+    cd ..
+
+
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - cmake -H. -Bbuild -A%PLATFORM% -DCMAKE_PREFIX_PATH="%PREFIX%" -DCMAKE_BUILD_TYPE="%CONFIGURATION%"
+
+# build with MSBuild
+build:
+  project: build\physfs_cxx.sln        # path to Visual Studio solution or project
+  parallel: true                # enable MSBuild parallel builds
+  verbosity: normal             # MSBuild verbosity level {quiet|minimal|normal|detailed}
+
+test_script:
+   - cd build
+   - set PATH=%PREFIX%\lib;%PATH%
+   - ctest -V -C %CONFIGURATION%
