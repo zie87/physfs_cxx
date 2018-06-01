@@ -22,7 +22,7 @@ matrix:
     - os: linux
       compiler: gcc
       addons: *gcc7
-      env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" UILD_TYPE='Debug' BUILD_TARGET='Coverage'
+      env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" BUILD_TYPE='Debug' BUILD_TARGET='Coverage'
       
     - os: linux
       compiler: clang
