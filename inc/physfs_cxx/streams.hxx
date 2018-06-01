@@ -5,6 +5,7 @@
 
 #include "file_device.hxx"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <vector>
