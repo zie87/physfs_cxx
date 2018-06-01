@@ -20,6 +20,11 @@ matrix:
       env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" BUILD_TYPE='Debug'
 
     - os: linux
+      compiler: gcc
+      addons: *gcc7
+      env: MATRIX_EVAL="CC=gcc-7 && CXX=g++-7" UILD_TYPE='Debug' BUILD_TARGET='Coverage'
+      
+    - os: linux
       compiler: clang
       addons: &clang6
         apt:
@@ -42,6 +47,10 @@ matrix:
       compiler: clang
       env: MATRIX_EVAL="CC=clang && CXX=clang++" BUILD_TYPE='Release'
 
+env:
+  global:
+    - CODECOV_TOKEN="b03a212d-cd86-4507-a1bc-56f97dea03bc"
+
 before_install:
   - eval "${MATRIX_EVAL}"
 
@@ -52,9 +61,25 @@ install:
 
 before_script:
   - cd ${TRAVIS_BUILD_DIR}
-  - cmake -H. -BBuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -Wdev
-  - cd Build
+  - cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -Wdev
   
 script:
-  - make -j 2
-  - ctest -V -j 2
+  - cmake --build ./build --target all -- -j 3
+  - |-
+    if [[ ${BUILD_TARGET} == 'Coverage' ]]; then
+      cmake --build ./build --target coverage
+    else
+      cd build
+      ctest -VV
+    fi
+  
+after_success:
+- |-
+  if [[ ${BUILD_TARGET} == 'Coverage' ]]; then
+    coveralls -b ./build -e 3rd -e src/tests -i include -i src --gcov-options '\-lp';
+    lcov --directory . --capture --output-file coverage.info
+    lcov --remove coverage.info '/usr/*' --output-file coverage.info
+    lcov --remove coverage.info "${PWD}/3rd/*" --output-file coverage.info
+    lcov --remove coverage.info "${PWD}/src/tests/*" --output-file coverage.info
+    bash <(curl -s https://codecov.io/bash)
+  fi

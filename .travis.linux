@@ -15,3 +15,8 @@ tar -xavf /tmp/physfs.tar.bz2 -C /tmp
 cd /tmp/physfs-3.0.1 && cmake -H. -Bbuild -DCMAKE_INSTALL_PREFIX=/usr/local -DPHYSFS_BUILD_TEST=OFF
 cd build && make && sudo make install
 cd ${TRAVIS_BUILD_DIR}
+
+if [[ ${BUILD_TARGET} == 'Coverage' ]]; then
+  sudo apt-get install -qq lcov gcovr
+  pip install --user pyyaml cpp-coveralls
+fi
