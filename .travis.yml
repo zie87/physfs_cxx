@@ -5,12 +5,17 @@ sudo: required
 matrix:
   include:
 
-- os: linux
-  compiler: gcc
-  addons: &gcc4
-    apt:
-      sources: ['ubuntu-toolchain-r-test']
-      packages: ['g++-4.8']
+  - os: linux
+    compiler: gcc
+    addons: &gcc4
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['g++-4.8']
+        env: MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8" BUILD_TYPE='Release'
+      
+    - os: linux
+      compiler: gcc
+      addons: *gcc4
       env: MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8" BUILD_TYPE='Debug'
       
     - os: linux
@@ -51,6 +56,16 @@ matrix:
 
     - os: osx
       osx_image: xcode8.3
+      compiler: clang
+      env: MATRIX_EVAL="CC=clang && CXX=clang++" BUILD_TYPE='Release'
+
+    - os: osx
+      osx_image: xcode9.3beta
+      compiler: clang
+      env: MATRIX_EVAL="CC=clang && CXX=clang++" BUILD_TYPE='Debug'
+    
+    - os: osx
+      osx_image: xcode9.3beta
       compiler: clang
       env: MATRIX_EVAL="CC=clang && CXX=clang++" BUILD_TYPE='Release'
 
