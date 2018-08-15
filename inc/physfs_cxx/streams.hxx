@@ -298,7 +298,7 @@ namespace physfs
   public:
     basic_ifstream() noexcept : istream_type(nullptr), stream_base_type() {}
     explicit basic_ifstream(const std::string& filename, access_mode mode = access_mode::read) : istream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ifstream() override {}
+    ~basic_ifstream() override = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };
@@ -314,7 +314,7 @@ namespace physfs
   public:
     basic_ofstream() noexcept : ostream_type(nullptr), stream_base_type() {}
     explicit basic_ofstream(const std::string& filename, access_mode mode = access_mode::write) : ostream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ofstream() override {}
+    ~basic_ofstream() override = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::write) { this->do_open(filename, mode); }
   };
@@ -330,7 +330,7 @@ namespace physfs
   public:
     basic_fstream() : iostream_type(nullptr), stream_base_type() {}
     explicit basic_fstream(const std::string& filename, access_mode mode = access_mode::read) : iostream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_fstream() {}
+    ~basic_fstream() = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };
