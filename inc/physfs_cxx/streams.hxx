@@ -28,7 +28,7 @@ namespace physfs
 
     basic_fstreambuf() noexcept : m_write_buffer(nullptr), m_read_buffer(nullptr) {}
     basic_fstreambuf(const std::string& filename, access_mode mode) : basic_fstreambuf() { open(filename, mode); }
-    ~basic_fstreambuf() { close(); }
+    ~basic_fstreambuf() override { close(); }
 
     inline basic_fstreambuf* open(const std::string& filename, access_mode mode)
     {
@@ -262,7 +262,7 @@ namespace physfs
       do_open(filename, mode);
     }
 
-    virtual ~fstream_common() = default;
+    ~fstream_common() override = default;
 
     inline void do_open(const std::string& filename, access_mode mode)
     {
@@ -298,7 +298,7 @@ namespace physfs
   public:
     basic_ifstream() noexcept : istream_type(nullptr), stream_base_type() {}
     explicit basic_ifstream(const std::string& filename, access_mode mode = access_mode::read) : istream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ifstream() {}
+    ~basic_ifstream() override {}
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };
@@ -314,7 +314,7 @@ namespace physfs
   public:
     basic_ofstream() noexcept : ostream_type(nullptr), stream_base_type() {}
     explicit basic_ofstream(const std::string& filename, access_mode mode = access_mode::write) : ostream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ofstream() {}
+    ~basic_ofstream() override {}
 
     inline void open(const std::string& filename, access_mode mode = access_mode::write) { this->do_open(filename, mode); }
   };
