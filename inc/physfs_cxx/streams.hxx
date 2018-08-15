@@ -54,19 +54,29 @@ namespace physfs
     inline int_type overflow(int_type c) override
     {
       if (!empty_buffer())
+      {
         return traits_type::eof();
+      }
       else if (!traits_type::eq_int_type(c, traits_type::eof()))
+      {
         return this->sputc(c);
+      }
       else
+      {
         return traits_type::not_eof(c);
+      }
     }
 
     inline int_type underflow() override
     {
       if (this->gptr() < this->egptr() || fill_buffer())
+      {
         return traits_type::to_int_type(*this->gptr());
+      }
       else
+      {
         return traits_type::eof();
+      }
     }
 
     int_type pbackfail(int_type c = traits_type::eof()) override
@@ -74,11 +84,16 @@ namespace physfs
       if (this->gptr() != this->eback())
       {
         this->gbump(-1);
-        if (!traits_type::eq_int_type(c, traits_type::eof())) *this->gptr() = traits_type::to_char_type(c);
+        if (!traits_type::eq_int_type(c, traits_type::eof()))
+        {
+          *this->gptr() = traits_type::to_char_type(c);
+        }
         return traits_type::not_eof(c);
       }
       else
+      {
         return traits_type::eof();
+      }
     }
 
     inline int sync() override { return (is_open() && empty_buffer()) ? 0 : -1; }
@@ -96,7 +111,9 @@ namespace physfs
           done += nbuf;
         }
         else if (!empty_buffer())
+        {
           break;
+        }
       }
       return done;
     }
@@ -116,7 +133,10 @@ namespace physfs
     inline std::streamsize showmanyc() override
     {
       int avail = 0;
-      if (sizeof(char_type) == 1) avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
+      if (sizeof(char_type) == 1)
+      {
+        avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
+      }
       return std::streamsize(avail);
     }
 
@@ -205,7 +225,10 @@ namespace physfs
         const std::streamsize written = this->write(this->m_write_buffer, count);
         if (written > 0)
         {
-          if (const std::streamsize unwritten = count - written) traits_type::move(this->pbase(), this->pbase() + written, unwritten);
+          if (const std::streamsize unwritten = count - written)
+          {
+            traits_type::move(this->pbase(), this->pbase() + written, unwritten);
+          }
           this->pbump(-written);
           return true;
         }
@@ -221,7 +244,10 @@ namespace physfs
 
       char_type* const rbuf = m_read_buffer;
 
-      if (npb) traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
+      if (npb)
+      {
+        traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
+      }
 
       std::streamsize rc = -1;
 
@@ -267,14 +293,20 @@ namespace physfs
     inline void do_open(const std::string& filename, access_mode mode)
     {
       m_buffer.open((m_filename = filename), mode);
-      if (!m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+      if (!m_buffer.is_open())
+      {
+        this->setstate(std::ios_base::failbit);
+      }
     }
 
   public:
     inline void close()
     {
       m_buffer.close();
-      if (m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+      if (m_buffer.is_open())
+      {
+        this->setstate(std::ios_base::failbit);
+      }
     }
 
     inline bool is_open() const { return m_buffer.is_open(); }
