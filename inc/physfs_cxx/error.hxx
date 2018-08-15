@@ -31,6 +31,6 @@ namespace physfs
   } while (false)
 #endif /*PHYSFS_CXX_CHECK*/
 
-} /*physfs*/
+} // namespace physfs
 
 #endif /*PHYSFS_CXX_ERROR_HXX*/
