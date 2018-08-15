@@ -240,8 +240,8 @@ namespace physfs
     }
 
   private:
-    basic_fstreambuf(const basic_fstreambuf&);
-    basic_fstreambuf& operator=(const basic_fstreambuf&);
+    basic_fstreambuf(const basic_fstreambuf&) = delete;
+    basic_fstreambuf& operator=(const basic_fstreambuf&) = delete;
 
     file_device m_file_device;
 
