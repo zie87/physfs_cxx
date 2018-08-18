@@ -27,8 +27,6 @@ endif()
 find_package (PhysFS REQUIRED)
 include_directories(${PHYSFS_INCLUDE_DIR})
 
-add_subdirectory (3rd EXCLUDE_FROM_ALL)
-
 include_directories(inc)
 
 enable_testing()
