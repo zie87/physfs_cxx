@@ -28,7 +28,7 @@ namespace physfs
 
     basic_fstreambuf() noexcept : m_write_buffer(nullptr), m_read_buffer(nullptr) {}
     basic_fstreambuf(const std::string& filename, access_mode mode) : basic_fstreambuf() { open(filename, mode); }
-    ~basic_fstreambuf() { close(); }
+    ~basic_fstreambuf() override { close(); }
 
     inline basic_fstreambuf* open(const std::string& filename, access_mode mode)
     {
@@ -54,19 +54,29 @@ namespace physfs
     inline int_type overflow(int_type c) override
     {
       if (!empty_buffer())
+      {
         return traits_type::eof();
+      }
       else if (!traits_type::eq_int_type(c, traits_type::eof()))
+      {
         return this->sputc(c);
+      }
       else
+      {
         return traits_type::not_eof(c);
+      }
     }
 
     inline int_type underflow() override
     {
       if (this->gptr() < this->egptr() || fill_buffer())
+      {
         return traits_type::to_int_type(*this->gptr());
+      }
       else
+      {
         return traits_type::eof();
+      }
     }
 
     int_type pbackfail(int_type c = traits_type::eof()) override
@@ -74,11 +84,16 @@ namespace physfs
       if (this->gptr() != this->eback())
       {
         this->gbump(-1);
-        if (!traits_type::eq_int_type(c, traits_type::eof())) *this->gptr() = traits_type::to_char_type(c);
+        if (!traits_type::eq_int_type(c, traits_type::eof()))
+        {
+          *this->gptr() = traits_type::to_char_type(c);
+        }
         return traits_type::not_eof(c);
       }
       else
+      {
         return traits_type::eof();
+      }
     }
 
     inline int sync() override { return (is_open() && empty_buffer()) ? 0 : -1; }
@@ -92,11 +107,13 @@ namespace physfs
         {
           nbuf = std::min(nbuf, n - done);
           traits_type::copy(this->pptr(), s + done, nbuf);
-          this->pbump(nbuf);
+          this->pbump(static_cast<int>(nbuf));
           done += nbuf;
         }
         else if (!empty_buffer())
+        {
           break;
+        }
       }
       return done;
     }
@@ -115,9 +132,12 @@ namespace physfs
 
     inline std::streamsize showmanyc() override
     {
-      int avail = 0;
-      if (sizeof(char_type) == 1) avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
-      return std::streamsize(avail);
+      std::streamsize avail(0);
+      if (sizeof(char_type) == 1)
+      {
+        avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
+      }
+      return avail;
     }
 
     pos_type seekoff(off_type pos, std::ios_base::seekdir dir, std::ios_base::openmode mode) override
@@ -205,8 +225,11 @@ namespace physfs
         const std::streamsize written = this->write(this->m_write_buffer, count);
         if (written > 0)
         {
-          if (const std::streamsize unwritten = count - written) traits_type::move(this->pbase(), this->pbase() + written, unwritten);
-          this->pbump(-written);
+          if (const std::streamsize unwritten = count - written)
+          {
+            traits_type::move(this->pbase(), this->pbase() + written, unwritten);
+          }
+          this->pbump(static_cast<int>(-written));
           return true;
         }
       }
@@ -221,7 +244,10 @@ namespace physfs
 
       char_type* const rbuf = m_read_buffer;
 
-      if (npb) traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
+      if (npb)
+      {
+        traits_type::move(rbuf + put_back_amount - npb, this->gptr() - npb, npb);
+      }
 
       std::streamsize rc = -1;
 
@@ -240,8 +266,8 @@ namespace physfs
     }
 
   private:
-    basic_fstreambuf(const basic_fstreambuf&);
-    basic_fstreambuf& operator=(const basic_fstreambuf&);
+    basic_fstreambuf(const basic_fstreambuf&) = delete;
+    basic_fstreambuf& operator=(const basic_fstreambuf&) = delete;
 
     file_device m_file_device;
 
@@ -262,19 +288,25 @@ namespace physfs
       do_open(filename, mode);
     }
 
-    virtual ~fstream_common() = default;
+    ~fstream_common() override = default;
 
     inline void do_open(const std::string& filename, access_mode mode)
     {
       m_buffer.open((m_filename = filename), mode);
-      if (!m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+      if (!m_buffer.is_open())
+      {
+        this->setstate(std::ios_base::failbit);
+      }
     }
 
   public:
     inline void close()
     {
       m_buffer.close();
-      if (m_buffer.is_open()) this->setstate(std::ios_base::failbit);
+      if (m_buffer.is_open())
+      {
+        this->setstate(std::ios_base::failbit);
+      }
     }
 
     inline bool is_open() const { return m_buffer.is_open(); }
@@ -298,7 +330,7 @@ namespace physfs
   public:
     basic_ifstream() noexcept : istream_type(nullptr), stream_base_type() {}
     explicit basic_ifstream(const std::string& filename, access_mode mode = access_mode::read) : istream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ifstream() {}
+    ~basic_ifstream() override = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };
@@ -314,7 +346,7 @@ namespace physfs
   public:
     basic_ofstream() noexcept : ostream_type(nullptr), stream_base_type() {}
     explicit basic_ofstream(const std::string& filename, access_mode mode = access_mode::write) : ostream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_ofstream() {}
+    ~basic_ofstream() override = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::write) { this->do_open(filename, mode); }
   };
@@ -330,7 +362,7 @@ namespace physfs
   public:
     basic_fstream() : iostream_type(nullptr), stream_base_type() {}
     explicit basic_fstream(const std::string& filename, access_mode mode = access_mode::read) : iostream_type(nullptr), stream_base_type(filename, mode) {}
-    ~basic_fstream() {}
+    ~basic_fstream() = default;
 
     inline void open(const std::string& filename, access_mode mode = access_mode::read) { this->do_open(filename, mode); }
   };

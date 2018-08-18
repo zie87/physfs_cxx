@@ -1,6 +1,6 @@
 # physfs_cxx [![Codacy Badge](https://api.codacy.com/project/badge/Grade/070ac7666e0c40e9aede0859db118bd5)](https://www.codacy.com/app/zie87/physfs_cxx?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zie87/physfs_cxx&amp;utm_campaign=Badge_Grade)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/b5qv3b68oc5dnfas?svg=true)](https://ci.appveyor.com/project/zie87/physfs-cxx)
+[![Build status](https://ci.appveyor.com/api/projects/status/b5qv3b68oc5dnfas/branch/master?svg=true)](https://ci.appveyor.com/project/zie87/physfs-cxx/branch/master)
 [![Build Status](https://travis-ci.org/zie87/physfs_cxx.svg?branch=master)](https://travis-ci.org/zie87/physfs_cxx)
 [![Codecov Status](https://codecov.io/gh/zie87/physfs_cxx/branch/master/graph/badge.svg)](https://codecov.io/gh/zie87/physfs_cxx)
 [![Coverall Status](https://coveralls.io/repos/github/zie87/physfs_cxx/badge.svg)](https://coveralls.io/github/zie87/physfs_cxx)

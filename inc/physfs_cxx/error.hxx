@@ -20,7 +20,7 @@ namespace physfs
 
     exception() : std::runtime_error(last_error()) {}
     exception(const std::string& str) : std::runtime_error(str) {}
-    virtual ~exception() = default;
+    ~exception() override = default;
   };
 
 #ifndef PHYSFS_CXX_CHECK
@@ -31,6 +31,6 @@ namespace physfs
   } while (false)
 #endif /*PHYSFS_CXX_CHECK*/
 
-} /*physfs*/
+} // namespace physfs
 
 #endif /*PHYSFS_CXX_ERROR_HXX*/
