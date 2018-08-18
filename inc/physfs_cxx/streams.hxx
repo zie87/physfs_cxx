@@ -107,7 +107,7 @@ namespace physfs
         {
           nbuf = std::min(nbuf, n - done);
           traits_type::copy(this->pptr(), s + done, nbuf);
-          this->pbump(nbuf);
+          this->pbump(static_cast<int>(nbuf));
           done += nbuf;
         }
         else if (!empty_buffer())
@@ -132,12 +132,12 @@ namespace physfs
 
     inline std::streamsize showmanyc() override
     {
-      int avail = 0;
+      std::streamsize avail(0);
       if (sizeof(char_type) == 1)
       {
         avail = fill_buffer() ? this->egptr() - this->gptr() : -1;
       }
-      return std::streamsize(avail);
+      return avail;
     }
 
     pos_type seekoff(off_type pos, std::ios_base::seekdir dir, std::ios_base::openmode mode) override
@@ -229,7 +229,7 @@ namespace physfs
           {
             traits_type::move(this->pbase(), this->pbase() + written, unwritten);
           }
-          this->pbump(-written);
+          this->pbump(static_cast<int>(-written));
           return true;
         }
       }
