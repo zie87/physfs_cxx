@@ -1,0 +1,30 @@
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
+coverage:
+  precision: 5
+  round: down
+  range: "70...100"
+
+  status:
+    project: yes
+    patch: yes
+    changes: no
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: yes
+      macro: yes
+
+ignore:
+  - "3rd/**/*"
+  - "src/tests/**/*"
+
+comment:
+  layout: "header, diff"
+  behavior: default
+  require_changes: no

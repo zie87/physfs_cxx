@@ -18,6 +18,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 option(USE_GCOV "Start coverage build" OFF)
 
+if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_BUILD_TYPE STREQUAL "Debug" AND USE_GCOV)
+  include(CodeCoverage)
+  set(CMAKE_CXX_FLAGS "-g -O0 -Wall -Wextra -Wdeprecated-declarations --coverage")
+  set(LCOV_REMOVE_EXTRA '${PROJECT_SOURCE_DIR}/3rd/*' '${PROJECT_SOURCE_DIR}/src/tests/*')
+endif()
+
 find_package (PhysFS REQUIRED)
 include_directories(${PHYSFS_INCLUDE_DIR})
 
